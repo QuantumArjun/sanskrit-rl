@@ -3,7 +3,7 @@
 A Gym-style environment for training language models to generate metrically-correct Sanskrit poetry. The project provides:
 
 * **Meter Verification**: Wrapper around the `chandas` library to verify Sanskrit meters
-* **Rich Prompt Dataset**: 1000+ prompts combining various topics and meters
+* **Rich Prompt Dataset**: 2000+ prompts combining various topics and meters (available on [HuggingFace](https://huggingface.co/datasets/QuantumArjun/sanskrit-meter-prompts))
 * **RL Environment**: OpenAI Gym environment for training LLMs
 * **Reward System**: Sophisticated reward calculation with anti-gaming mechanisms
 
@@ -22,10 +22,17 @@ python -m src.data.generate_dataset
 
 ## Usage
 
-### 1. Generate Prompts
+### 1. Get Prompts
+You can either generate prompts locally or use the pre-generated dataset from HuggingFace:
+
 ```python
+# Option 1: Generate locally
 from src.data.generate_dataset import main as generate_prompts
 generate_prompts()  # Creates prompts.jsonl
+
+# Option 2: Use HuggingFace dataset
+from datasets import load_dataset
+dataset = load_dataset("QuantumArjun/sanskrit-meter-prompts")
 ```
 
 ### 2. Use the Environment
