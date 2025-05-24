@@ -1,5 +1,5 @@
 import pytest, textwrap
-from src.verifier import verify_meter
+from sanskrit_meter_rl.verifier import verify_meter
 
 GOOD_ANUSHTUPH = textwrap.dedent("""
     धर्मो रक्षति रक्षितः
