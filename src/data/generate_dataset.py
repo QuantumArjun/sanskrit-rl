@@ -8,9 +8,27 @@ import json, itertools, random
 from pathlib import Path
 
 TOPICS = [
-    "शौर्यम् (heroism)", "वसन्तः (spring)", "गुरुपूजा (guru‑worship)",
-    "करुणा (compassion)", "सागरः (the ocean)", "निर्वाणम् (liberation)",
-    "वीररसः (valour)", "प्रकृति: (nature)", "ज्ञानयोगः (path of knowledge)",
+    # Traditional Rasas (Emotional Essences)
+    "शृङ्गारः (love)", "वीररसः (valor)", "करुणा (pathos)", "अद्भुतम् (wonder)",
+    "हास्यम् (humor)", "भयानकम् (terror)", "रौद्रम् (fury)", "शान्तम् (peace)",
+    
+    # Natural Elements and Seasons
+    "वसन्तः (spring)", "वर्षा (monsoon)", "शरत् (autumn)", "हेमन्तः (winter)",
+    "सागरः (ocean)", "पर्वताः (mountains)", "वनम् (forest)", "नद्यः (rivers)",
+    
+    # Philosophical and Spiritual
+    "ज्ञानयोगः (path of knowledge)", "भक्तिः (devotion)", "ध्यानम् (meditation)",
+    "मोक्षः (liberation)", "धर्मः (righteousness)", "कर्मयोगः (path of action)",
+    
+    # Heroic and Epic
+    "युद्धम् (battle)", "शौर्यम् (heroism)", "त्यागः (sacrifice)", "विजयः (victory)",
+    
+    # Cultural and Social
+    "गुरुपूजा (guru-worship)", "उत्सवः (festival)", "विवाहः (wedding)",
+    "राजसभा (royal court)", "मैत्री (friendship)", "प्रेम (love)",
+    
+    # Abstract Concepts
+    "कालः (time)", "सत्यम् (truth)", "कीर्तिः (fame)", "आनन्दः (bliss)",
 ]
 
 METERS = [
