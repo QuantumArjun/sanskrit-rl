@@ -1,0 +1,14 @@
+[project]
+name = "sanskrit-meter-rl"
+version = "0.0.1"
+description = "Meter verifier + prompt dataset for Sanskrit poetry RL research"
+authors = [{name = "Your Name"}]
+requires-python = ">=3.9"
+dependencies = [
+    "chandas>=0.0.10",
+    "indic-transliteration>=1.8.5",
+    "huggingface_hub>=0.23.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "black", "ruff"]
