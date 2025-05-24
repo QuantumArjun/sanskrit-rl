@@ -3,7 +3,7 @@
 A Gym-style environment for training language models to generate metrically-correct Sanskrit poetry. The project provides:
 
 * **Meter Verification**: Wrapper around the `chandas` library to verify Sanskrit meters
-* **Rich Prompt Dataset**: 2000+ prompts combining various topics and meters (available on [HuggingFace](https://huggingface.co/datasets/QuantumArjun/sanskrit-meter-prompts))
+* **Rich Prompt Dataset**: 1000+ prompts combining various topics and meters (available on [HuggingFace](https://huggingface.co/datasets/QuantumArjun/sanskrit-meter-prompts))
 * **RL Environment**: OpenAI Gym environment for training LLMs
 * **Reward System**: Sophisticated reward calculation with anti-gaming mechanisms
 
@@ -36,6 +36,8 @@ dataset = load_dataset("QuantumArjun/sanskrit-meter-prompts")
 ```
 
 ### 2. Use the Environment
+
+#### Basic Usage
 ```python
 from src.env import SanskritMeterEnv
 
@@ -47,6 +49,31 @@ for _ in range(max_steps):
     obs, reward, done, info = env.step(action)
     if done:
         break
+```
+
+#### Prime-RL Integration
+The environment can be used with Prime-RL for efficient training:
+
+```python
+from prime_rl import make_prime_env
+from src.prime_wrapper import PrimeSanskritMeterEnv
+
+# Create Prime-RL compatible environment
+env = PrimeSanskritMeterEnv(
+    model_name="google/gemma-2b",
+    max_length=256
+)
+
+# Wrap with Prime-RL
+prime_env = make_prime_env(
+    env=env,
+    framework="pytorch",  # or "jax"
+    num_envs=4  # number of parallel environments
+)
+
+# Train with Prime-RL
+model = prime_rl.PPO("MlpPolicy", prime_env)
+model.learn(total_timesteps=1_000_000)
 ```
 
 ## TODOs
