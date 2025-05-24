@@ -8,14 +8,20 @@ from gymnasium import spaces
 from typing import Optional, Tuple, Dict, Any
 from pathlib import Path
 import json
+from transformers import AutoTokenizer, AutoModelForCausalLM
+from .reward import calculate_reward
 
 class SanskritMeterEnv(gym.Env):
     """Environment for generating Sanskrit poetry in specific meters."""
     
     metadata = {"render_modes": ["human"]}
     
-    def __init__(self, render_mode: Optional[str] = None):
+    def __init__(self, render_mode: Optional[str] = None, model_name: str = "google/gemma-2b"):
         super().__init__()
+        
+        # Load Gemma tokenizer and model
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.model = AutoModelForCausalLM.from_pretrained(model_name)
         
         # Load the prompts
         data_path = Path(__file__).parent / "data" / "prompts.jsonl"
@@ -24,17 +30,14 @@ class SanskritMeterEnv(gym.Env):
             for line in f:
                 self.prompts.append(json.loads(line))
         
-        # TODO: Update vocabulary size based on actual tokenizer
-        # Current size is just a placeholder
-        self.action_space = spaces.Discrete(1000)
+        # Action space is Gemma's vocabulary
+        self.action_space = spaces.Discrete(self.tokenizer.vocab_size)
         
-        # Define observation space
-        # This will include the encoded prompt and current generated text
-        # Assuming max sequence length of 512
-        self.max_seq_len = 512
+        # Define observation space based on model's config
+        self.max_seq_len = self.model.config.max_position_embeddings
         self.observation_space = spaces.Dict({
-            "prompt_ids": spaces.Box(low=0, high=1000, shape=(self.max_seq_len,), dtype=np.int32),
-            "generated_ids": spaces.Box(low=0, high=1000, shape=(self.max_seq_len,), dtype=np.int32),
+            "prompt_ids": spaces.Box(low=0, high=self.tokenizer.vocab_size, shape=(self.max_seq_len,), dtype=np.int32),
+            "generated_ids": spaces.Box(low=0, high=self.tokenizer.vocab_size, shape=(self.max_seq_len,), dtype=np.int32),
             "attention_mask": spaces.Box(low=0, high=1, shape=(self.max_seq_len,), dtype=np.int32)
         })
         
@@ -49,15 +52,16 @@ class SanskritMeterEnv(gym.Env):
         self.current_prompt = self.np_random.choice(self.prompts)
         self.current_generated = []
         
-        # TODO: Integrate with actual tokenizer in reset
-        # Need to:
-        # 1. Encode prompt text using tokenizer
-        # 2. Create proper attention mask for the prompt
-        # 3. Initialize empty generated sequence
+        # Create prompt text
+        prompt_text = f"Write a Sanskrit verse in {self.current_prompt['meter']} meter about {self.current_prompt['topic']}:\n"
+        
+        # Encode prompt
+        encoded = self.tokenizer(prompt_text, return_tensors="np", padding="max_length", max_length=self.max_seq_len)
+        
         obs = {
-            "prompt_ids": np.zeros(self.max_seq_len, dtype=np.int32),
+            "prompt_ids": encoded["input_ids"][0],
             "generated_ids": np.zeros(self.max_seq_len, dtype=np.int32),
-            "attention_mask": np.zeros(self.max_seq_len, dtype=np.int32)
+            "attention_mask": encoded["attention_mask"][0]
         }
         
         return obs, {}
@@ -66,35 +70,39 @@ class SanskritMeterEnv(gym.Env):
         # Add token to generated sequence
         self.current_generated.append(action)
         
-        # TODO: Update observation with new token
-        # Need to:
-        # 1. Keep prompt encoding from reset
-        # 2. Update generated_ids with new token
-        # 3. Update attention mask for the new sequence
+        # Create full sequence (prompt + generated)
+        generated_array = np.array(self.current_generated)
+        padded_generated = np.pad(generated_array, 
+                                 (0, self.max_seq_len - len(generated_array)),
+                                 mode='constant')
+        
+        # Update observation
         obs = {
-            "prompt_ids": np.zeros(self.max_seq_len, dtype=np.int32),
-            "generated_ids": np.zeros(self.max_seq_len, dtype=np.int32),
-            "attention_mask": np.zeros(self.max_seq_len, dtype=np.int32)
+            "prompt_ids": self.observation_space["prompt_ids"].low.copy(),  # Keep original prompt
+            "generated_ids": padded_generated,
+            "attention_mask": np.ones(self.max_seq_len, dtype=np.int32)  # All tokens visible
         }
         
-        # TODO: Implement proper reward calculation
-        # Need to:
-        # 1. Convert generated tokens to text
-        # 2. Use chandas library to verify meter
-        # 3. Calculate reward based on meter correctness
-        reward = 0.0
+        # Convert generated tokens to text
+        generated_text = self.tokenizer.decode(self.current_generated)
         
-        # Check if episode is done
-        done = len(self.current_generated) >= self.max_seq_len
+        # Calculate reward using the meter from the prompt
+        reward_info = calculate_reward(generated_text, self.current_prompt["meter"])
+        reward = reward_info["reward"]
+        
+        # Episode is done if we hit max length or generate EOS token
+        done = (len(self.current_generated) >= self.max_seq_len or
+                action == self.tokenizer.eos_token_id)
         
         return obs, reward, done, False, {}
     
     def render(self):
         if self.render_mode == "human":
-            # TODO: Implement proper text generation and rendering
-            # Need to:
-            # 1. Decode token IDs back to text using tokenizer
-            # 2. Format the text properly with Sanskrit characters
-            # 3. Display both the prompt and generated text in a readable format
-            print(f"Prompt: {self.current_prompt}")
-            print(f"Generated: {self.current_generated}")
+            print(f"Prompt Topic: {self.current_prompt['topic']}")
+            print(f"Target Meter: {self.current_prompt['meter']}")
+            print("Generated Text:")
+            if self.current_generated:
+                text = self.tokenizer.decode(self.current_generated)
+                print(text)
+            else:
+                print("<no text generated yet>")

@@ -3,7 +3,9 @@ Produces prompts.jsonl in repo root.
 
 Each line: {"topic": "...", "meter": "..."}
 """
-import json, itertools, random, pathlib
+from __future__ import annotations
+import json, itertools, random
+from pathlib import Path
 
 TOPICS = [
     "शौर्यम् (heroism)", "वसन्तः (spring)", "गुरुपूजा (guru‑worship)",
@@ -21,7 +23,7 @@ def main() -> None:
             for t, m in itertools.product(TOPICS, METERS)]
     random.shuffle(rows)
 
-    out = Path(__file__).parent / "data" / "prompts.jsonl"
+    out = Path(__file__).parent / "prompts.jsonl"
     with out.open("w", encoding="utf-8") as f:
         for r in rows:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")
