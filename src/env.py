@@ -52,8 +52,8 @@ class SanskritMeterEnv(gym.Env):
         self.current_prompt = self.np_random.choice(self.prompts)
         self.current_generated = []
         
-        # Create prompt text
-        prompt_text = f"Write a Sanskrit verse in {self.current_prompt['meter']} meter about {self.current_prompt['topic']}:\n"
+        # Get the formatted prompt
+        prompt_text = self.current_prompt['prompt']
         
         # Encode prompt
         encoded = self.tokenizer(prompt_text, return_tensors="np", padding="max_length", max_length=self.max_seq_len)
